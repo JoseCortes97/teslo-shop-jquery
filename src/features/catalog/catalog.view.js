@@ -46,8 +46,13 @@ function renderProducts($grid, products) {
 
 function pageItem(page, label, { disabled = false, active = false } = {}) {
   const $item = $(cloneTemplate("tpl-page-item"));
+  // Las clases son solo estilo; el JS decide con los atributos aria-*
   $item.toggleClass("disabled", disabled).toggleClass("active", active);
-  $item.find("[data-page]").attr("data-page", page).text(label);
+  $item.find("[data-page]").attr({
+    "data-page": page,
+    "aria-disabled": disabled ? "true" : null,
+    "aria-current": active ? "page" : null,
+  }).text(label);
   return $item[0];
 }
 
@@ -64,12 +69,19 @@ function renderPagination($pagination, current, totalPages) {
   $pagination.append(items);
 }
 
+const NS = ".catalog"; // namespace de eventos: permite quitarlos con .off(NS)
+
+/**
+ * Monta el listado en la página.
+ * @returns {() => void} destroy: quita los eventos del catálogo
+ */
 export function initCatalog() {
   const $grid = $("#products-grid");
   const $pagination = $("#products-pagination");
   const $gender = $("#gender-filter");
+  const $window = $(window);
 
-  if (!$grid.length) return;
+  if (!$grid.length) return () => {};
 
   let state = readState();
   let requestId = 0; // descarta respuestas viejas si el usuario cambia rápido de página
@@ -104,23 +116,32 @@ export function initCatalog() {
   }
 
   // Delegación: funciona aunque el HTML se vuelva a pintar
-  $pagination.on("click", "[data-page]", function (e) {
+  $pagination.on(`click${NS}`, "[data-page]", function (e) {
     e.preventDefault();
-    if ($(this).parent().is(".disabled, .active")) return;
-    go({ page: Number($(this).attr("data-page")) });
+    const $link = $(this);
+    if ($link.is('[aria-disabled="true"], [aria-current="page"]')) return;
+    go({ page: Number($link.attr("data-page")) });
   });
 
-  $gender.on("change", function () {
+  $gender.on(`change${NS}`, function () {
     go({ gender: $(this).val(), page: 1 });
   });
 
-  $grid.on("click", "[data-retry]", load);
+  $grid.on(`click${NS}`, "[data-retry]", load);
 
   // Botones atrás / adelante del navegador
-  $(window).on("popstate", () => {
+  $window.on(`popstate${NS}`, () => {
     state = readState();
     load();
   });
 
   load();
+
+  return function destroy() {
+    requestId++; // ignora la respuesta en curso
+    $pagination.off(NS);
+    $gender.off(NS);
+    $grid.off(NS);
+    $window.off(NS);
+  };
 }

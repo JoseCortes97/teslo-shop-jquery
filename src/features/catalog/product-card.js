@@ -8,6 +8,15 @@ import { cloneTemplate } from "../../utils/template.js";
 import { formatPrice } from "../../utils/format.js";
 
 const PLACEHOLDER = "/images/no-image.png";
+const DESCRIPTION_LENGTH = 100;
+
+// Las descripciones de la API son largas: el card muestra solo el inicio
+function excerpt(text = "", max = DESCRIPTION_LENGTH) {
+  const clean = text.trim();
+  if (clean.length <= max) return clean;
+  const cut = clean.lastIndexOf(" ", max);
+  return `${clean.slice(0, cut > 0 ? cut : max)}…`;
+}
 
 function imageUrl(image) {
   if (!image) return PLACEHOLDER;
@@ -27,6 +36,7 @@ export function createProductCard(product) {
     .find('[data-field="image"]')
     .attr({ src: imageUrl(product.images?.[0]), alt: title });
   $card.find('[data-field="title"]').text(title);
+  $card.find('[data-field="description"]').text(excerpt(product.description));
   $card.find('[data-field="price"]').text(formatPrice(product.price));
   $card
     .find('[data-field="link"]')
