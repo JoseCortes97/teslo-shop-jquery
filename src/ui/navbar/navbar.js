@@ -1,18 +1,17 @@
 // src/ui/navbar/navbar.js
 // Inserta el navbar (navbar.html) en la página y marca el link activo.
 // El menú móvil lo maneja Bootstrap con data-bs-toggle="collapse".
+// Los links llevan data-link: en la misma página el router los resuelve sin recargar.
 
 import $ from "jquery";
-import "bootstrap/js/dist/collapse"; // registra el data API de collapse
+import Collapse from "bootstrap/js/dist/collapse"; // registra el data API de collapse
+import { router, normalizePath } from "../../core/router.js";
 import template from "./navbar.html?raw";
-
-// "/index.html" y "/" son la misma página
-const normalize = (path) => path.replace(/\/index\.html$/, "/");
 
 // Un link está activo si coinciden la ruta y el género (?gender=)
 function linkKey(url) {
   const { pathname, searchParams } = new URL(url, location.origin);
-  return `${normalize(pathname)}?${searchParams.get("gender") ?? ""}`;
+  return `${normalizePath(pathname)}?${searchParams.get("gender") ?? ""}`;
 }
 
 function markActive($links) {
@@ -27,11 +26,9 @@ function markActive($links) {
   });
 }
 
-const NS = ".navbar";
-
 /**
  * @param {string} [target] Elemento que se reemplaza por el navbar
- * @returns {() => void} destroy: quita los eventos del navbar
+ * @returns {() => void} destroy: deja de escuchar al router
  */
 export function mountNavbar(target = "[data-navbar]") {
   const $target = $(target);
@@ -39,15 +36,14 @@ export function mountNavbar(target = "[data-navbar]") {
 
   const $nav = $(template);
   const $links = $nav.find("[data-nav-link]");
-  const $window = $(window);
+  const $collapse = $nav.find(".navbar-collapse");
 
   markActive($links);
   $target.replaceWith($nav);
 
-  // La paginación del catálogo cambia la URL con pushState
-  $window.on(`popstate${NS}`, () => markActive($links));
-
-  return function destroy() {
-    $window.off(NS);
-  };
+  // Al navegar sin recargar: actualiza el link activo y cierra el menú móvil
+  return router.subscribe(() => {
+    markActive($links);
+    Collapse.getInstance($collapse[0])?.hide();
+  });
 }

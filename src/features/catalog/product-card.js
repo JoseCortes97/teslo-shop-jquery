@@ -3,11 +3,9 @@
 // Usa .text() y .attr(): el navegador escapa los valores, no hace falta escapar HTML a mano.
 
 import $ from "jquery";
-import { enviroment } from "../../config/environment.js";
 import { cloneTemplate } from "../../utils/template.js";
 import { formatPrice } from "../../utils/format.js";
 
-const PLACEHOLDER = "/images/no-image.png";
 const DESCRIPTION_LENGTH = 100;
 
 // Las descripciones de la API son largas: el card muestra solo el inicio
@@ -18,24 +16,17 @@ function excerpt(text = "", max = DESCRIPTION_LENGTH) {
   return `${clean.slice(0, cut > 0 ? cut : max)}…`;
 }
 
-function imageUrl(image) {
-  if (!image) return PLACEHOLDER;
-  if (/^https?:\/\//.test(image)) return image;
-  return `${enviroment.baseUrl}/files/product/${encodeURIComponent(image)}`;
-}
-
 /**
- * @param {object} product
+ * @param {import("./product.mapper.js").Product} product
  * @returns {HTMLElement}
  */
 export function createProductCard(product) {
   const $card = $(cloneTemplate("tpl-product-card"));
-  const title = product.title ?? "";
 
   $card
     .find('[data-field="image"]')
-    .attr({ src: imageUrl(product.images?.[0]), alt: title });
-  $card.find('[data-field="title"]').text(title);
+    .attr({ src: product.imageUrl, alt: product.title });
+  $card.find('[data-field="title"]').text(product.title);
   $card.find('[data-field="description"]').text(excerpt(product.description));
   $card.find('[data-field="price"]').text(formatPrice(product.price));
   $card

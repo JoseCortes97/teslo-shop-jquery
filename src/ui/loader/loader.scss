@@ -1,0 +1,33 @@
+// Barra fina fija arriba de la página
+.app-loader {
+  position: fixed;
+  inset: 0 0 auto;
+  z-index: 1090;
+  height: 3px;
+  overflow: hidden;
+  pointer-events: none;
+
+  &__bar {
+    width: 40%;
+    height: 100%;
+    background-color: var(--bs-primary);
+    animation: app-loader 1s ease-in-out infinite;
+  }
+}
+
+@keyframes app-loader {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(250%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .app-loader__bar {
+    width: 100%;
+    opacity: 0.6;
+    animation: none;
+  }
+}

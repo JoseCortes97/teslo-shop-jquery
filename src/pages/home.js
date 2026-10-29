@@ -1,9 +1,4 @@
-import $ from "jquery";
-import "@/styles/main.scss";
-import { mountNavbar } from "@/ui/navbar/navbar.js";
+import { bootstrapApp } from "@/app/bootstrap.js";
 import { initCatalog } from "@/features/catalog/catalog.view.js";
 
-$(() => {
-  mountNavbar();
-  initCatalog();
-});
+bootstrapApp(() => initCatalog());

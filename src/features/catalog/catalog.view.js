@@ -5,25 +5,22 @@ import $ from "jquery";
 import { getProducts } from "./catalog.service.js";
 import { createProductCard } from "./product-card.js";
 import { cloneTemplate } from "../../utils/template.js";
+import { router } from "../../core/router.js";
 
 const LIMIT = 9;
 
 // Lee ?page=2&gender=men de la URL
 function readState() {
-  const params = new URLSearchParams(location.search);
+  const params = router.query();
   return {
     page: Math.max(1, Number(params.get("page")) || 1),
     gender: params.get("gender") || "",
   };
 }
 
-// Escribe el estado en la URL sin recargar (permite compartir el enlace y usar "atrás")
-function writeState({ page, gender }) {
-  const params = new URLSearchParams();
-  if (page > 1) params.set("page", page);
-  if (gender) params.set("gender", gender);
-  const qs = params.toString();
-  history.pushState(null, "", qs ? `?${qs}` : location.pathname);
+// Estado → query string (permite compartir el enlace y usar "atrás")
+function toQuery({ page, gender }) {
+  return { page: page > 1 ? page : null, gender };
 }
 
 function renderLoading($grid) {
@@ -79,7 +76,6 @@ export function initCatalog() {
   const $grid = $("#products-grid");
   const $pagination = $("#products-pagination");
   const $gender = $("#gender-filter");
-  const $window = $(window);
 
   if (!$grid.length) return () => {};
 
@@ -92,11 +88,15 @@ export function initCatalog() {
     renderLoading($grid);
 
     try {
-      const resp = await getProducts({
-        limit: LIMIT,
-        offset: (state.page - 1) * LIMIT,
-        gender: state.gender,
-      });
+      // notify: false → el error se pinta en el grid, no en el aviso global
+      const resp = await getProducts(
+        {
+          limit: LIMIT,
+          offset: (state.page - 1) * LIMIT,
+          gender: state.gender,
+        },
+        { notify: false }
+      );
       if (id !== requestId) return;
 
       renderProducts($grid, resp.products);
@@ -108,10 +108,9 @@ export function initCatalog() {
     }
   }
 
+  // El router avisa el cambio y la suscripción de abajo vuelve a cargar
   function go(next) {
-    state = { ...state, ...next };
-    writeState(state);
-    load();
+    router.navigate(toQuery({ ...state, ...next }));
     $grid[0].scrollIntoView({ behavior: "smooth", block: "start" });
   }
 
@@ -129,8 +128,8 @@ export function initCatalog() {
 
   $grid.on(`click${NS}`, "[data-retry]", load);
 
-  // Botones atrás / adelante del navegador
-  $window.on(`popstate${NS}`, () => {
+  // Paginación, filtro, links del navbar y atrás / adelante
+  const unsubscribe = router.subscribe(() => {
     state = readState();
     load();
   });
@@ -142,6 +141,6 @@ export function initCatalog() {
     $pagination.off(NS);
     $gender.off(NS);
     $grid.off(NS);
-    $window.off(NS);
+    unsubscribe();
   };
 }

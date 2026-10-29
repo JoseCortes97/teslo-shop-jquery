@@ -33,7 +33,7 @@
  * Eventos que emite en `document` (CustomEvent, el dato va en event.detail):
  *   'http:start' / 'http:end'   → mostrar / ocultar spinner global
  *   'auth:unauthorized'          → sesión expirada (401)
- *   'http:error'                 → log o toast genérico
+ *   'http:error'                 → log o toast genérico (se omite con { notify: false })
  *
  *   document.addEventListener('http:error', (e) => Toast.show(e.detail.message));
  *   // Con jQuery: $(document).on('http:error', (e) => Toast.show(e.originalEvent.detail.message));
@@ -302,6 +302,7 @@ async function send(url, init, { signal, timeout }) {
  * @param {AbortSignal} [options.signal]
  * @param {number} [options.timeout]
  * @param {boolean} [options.silent]        No dispara eventos de spinner
+ * @param {boolean} [options.notify]        false: no dispara 'http:error' (la vista muestra el error)
  * @returns {Promise<any>}                  Cuerpo de la respuesta (null si 204)
  */
 async function request(method, path, options = {}) {
@@ -312,6 +313,7 @@ async function request(method, path, options = {}) {
     signal,
     timeout = CONFIG.timeout,
     silent = false,
+    notify = true,
   } = options;
   const verb = method.toUpperCase();
 
@@ -355,7 +357,7 @@ async function request(method, path, options = {}) {
       auth.clearToken();
       emit("auth:unauthorized", error);
     }
-    if (!error.isAborted) emit("http:error", error);
+    if (notify && !error.isAborted) emit("http:error", error);
     throw error;
   } finally {
     if (!silent) trackEnd();
