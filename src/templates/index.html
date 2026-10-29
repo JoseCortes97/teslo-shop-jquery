@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Teslo Shop</title>
+  </head>
+  <body data-page="home">
+    <main class="container py-4">
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3 mb-0">Productos</h1>
+        <select id="gender-filter" class="form-select w-auto">
+          <option value="">Todos</option>
+          <option value="men">Hombre</option>
+          <option value="women">Mujer</option>
+          <option value="kid">Niños</option>
+          <option value="unisex">Unisex</option>
+        </select>
+      </div>
+
+      <div
+        id="products-grid"
+        class="row row-cols-1 row-cols-sm-2 row-cols-lg-3 g-4"
+      ></div>
+
+      <nav class="mt-4" aria-label="Paginación de productos">
+        <ul
+          id="products-pagination"
+          class="pagination justify-content-center"
+        ></ul>
+      </nav>
+    </main>
+
+    <!-- ───────────── Templates (el JS los clona y llena) ───────────── -->
+
+    <template id="tpl-product-card">
+      <div class="col">
+        <div class="card h-100 shadow-sm">
+          <img data-field="image" class="card-img-top" loading="lazy" alt="" />
+          <div class="card-body d-flex flex-column">
+            <h5 data-field="title" class="card-title"></h5>
+            <p data-field="price" class="card-text fw-bold mb-3"></p>
+            <a data-field="link" class="btn btn-outline-primary mt-auto"
+              >Ver producto</a
+            >
+          </div>
+        </div>
+      </div>
+    </template>
+
+    <template id="tpl-loading">
+      <div class="col-12 text-center py-5">
+        <div class="spinner-border" role="status">
+          <span class="visually-hidden">Cargando…</span>
+        </div>
+      </div>
+    </template>
+
+    <template id="tpl-error">
+      <div class="col-12">
+        <div
+          class="alert alert-danger d-flex justify-content-between align-items-center"
+        >
+          <span data-field="message"></span>
+          <button
+            type="button"
+            class="btn btn-sm btn-outline-danger"
+            data-retry
+          >
+            Reintentar
+          </button>
+        </div>
+      </div>
+    </template>
+
+    <template id="tpl-empty">
+      <div class="col-12">
+        <p class="text-muted text-center py-5">No hay productos.</p>
+      </div>
+    </template>
+
+    <template id="tpl-page-item">
+      <li class="page-item">
+        <a class="page-link" href="#" data-page></a>
+      </li>
+    </template>
+    <script type="module">
+      import "@/pages/home.js";
+    </script>
+  </body>
+</html>
